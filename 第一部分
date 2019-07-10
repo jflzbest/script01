@@ -1,0 +1,400 @@
+一、Logistic实现代码
+1  # load and plot datasetfrom pandas import read_csvfrom pandas import datetimefrom matplotlib import pyplot
+2 # load dataset
+3 def parser(x):
+4 def loadDataSet():
+5 dataMat = []; labelMat = [] 
+6 fr = open('testSet.txt') 
+7  for line in fr.readlines(): 
+8 lineArr = line.strip().split()
+9  dataMat.append([1.0, float(lineArr[0]), float(lineArr[1])])
+10  labelMat.append(int(lineArr[2]))
+11  return dataMat,labelMat
+12//
+13 #sigmod函数
+14 def sigmoid(inX):
+15 return 1.0/(1+exp(-inX))
+16 //
+17 #梯度上升算法
+18 //
+19 def gradAscent(dataMatIn, classLabels):
+20  dataMatrix = mat(dataMatIn)           #convert to NumPy matrix
+21  labelMat = mat(classLabels).transpose() #convert to NumPy matrix
+22  m,n = shape(dataMatrix)
+23   #目标移动的步长
+24   alpha = 0.001
+25  #迭代次数
+26   maxCycles = 500
+27  weights = ones((n,1))
+28  #在for循环迭代完成后，将返回训练好的回归系数。
+29   for k in range(maxCycles):            #heavy on matrix operations
+30   h = sigmoid(dataMatrix*weights)     #matrix mult
+31   error = (labelMat - h)              #vector subtraction
+32   weights = weights + alpha * dataMatrix.transpose()* error #matrix mult
+33   return weights
+34 #画出数据集和logistic回归最佳拟合直线函数
+35 def plotBestFit(weights):
+36  import matplotlib.pyplot as plt
+37  dataMat,labelMat=loadDataSet()
+38  dataArr = array(dataMat)
+39  n = shape(dataArr)[0]
+40  xcord1 = []; ycord1 = []
+41  xcord2 = []; ycord2 = []
+42  for i in range(n):
+43 if int(labelMat[i])== 1:
+44   xcord1.append(dataArr[i,1]); ycord1.append(dataArr[i,2])
+45  else:
+46  xcord2.append(dataArr[i,1]); ycord2.append(dataArr[i,2])
+47 fig = plt.figure()
+48  ax = fig.add_subplot(111)
+49  ax.scatter(xcord1, ycord1, s=30, c='red', marker='s')
+50  ax.scatter(xcord2, ycord2, s=30, c='green')
+51  x = arange(-3.0, 3.0, 0.1)
+52  #最佳拟合直线
+53  y = (-weights[0]-weights[1]*x)/weights[2]
+54 ax.plot(x, y)
+55 plt.xlabel('X1'); plt.ylabel('X2');
+56  plt.show()
+
+梯度上升算法：
+1 def stocGradAscent0(dataMatrix, classLabels):
+2  m,n = shape(dataMatrix)
+3  alpha = 0.01
+4  weights = ones(n)   #initialize to all ones
+5  for i in range(m):
+6 h = sigmoid(sum(dataMatrix[i]*weights))
+7  error = classLabels[i] - h
+8 weights = weights + alpha * error * dataMatrix[i]
+9  return weights
+
+改进梯度上升算法：
+1 def stocGradAscent1(dataMatrix, classLabels, numIter=150):
+2 m,n = shape(dataMatrix) 
+3 weights = ones(n)   #initialize to all ones
+4  for j in range(numIter):
+5  dataIndex = range(m) 
+6 for i in range(m): 
+7  alpha = 4/(1.0+j+i)+0.0001    #apha decreases with iteration, does not 
+8 #使用logistic回归进行分类并不需要做很多宫祖宗，所需要的知识把测试集上的每个特征向量
+9  # 乘以最优化方法的来的回归系数，再将该乘积结果求和，最后输入到sigmoid函数中即可。
+10 randIndex = int(random.uniform(0,len(dataIndex)))#go to 0 because of the constant
+11 h = sigmoid(sum(dataMatrix[randIndex]*weights))
+12 error = classLabels[randIndex] - h
+13 weights = weights + alpha * error * dataMatrix[randIndex]
+14 del(randIndex)
+15  return weights
+16 //
+17 dataArr,labelMat=loadDataSet()
+18 weights=stocGradAscent1(array(dataArr),labelMat)
+19 plotBestFit(weights)
+
+
+
+
+二、支持向量机实现代码
+
+数据归类：
+1  # load and plot datasetfrom pandas import read_csvfrom pandas import datetimefrom matplotlib import pyplot
+2 # load dataset
+3 def parser(x):
+4   self.labelMat = classLabels # 样本的类标号
+5  self.C = C # 对偶因子的上界值 
+6   self.tol = toler 
+7   self.m = shape(dataMatIn)[0] # 样本的行数，即样本对象的个数 
+8   self.alphas = mat(zeros((self.m, 1))) # 对偶因子
+9   self.b = 0 # 分割函数的截距
+10  self.eCache = mat(zeros((self.m, 2))) # 差值矩阵 m * 2，第一列是对象的标志位 1 表示存在不为零的差值 0 表示差值为零，第二列是实际的差值 E
+11  self.K = mat(zeros((self.m, self.m))) # 对象经过核函数映射之后的值
+12   for i in range(self.m): # 遍历全部样本集
+13   self.K[:,i] = kernelTrans(self.X, self.X[i,:], kTup ) # 调用径向基核函数
+
+核函数：
+1 # 径向基核函数（高斯函数）
+2 def kernelTrans(X, A, kTup): # X 是样本集矩阵，A 是样本对象（矩阵的行向量） ， kTup 元组 
+3  m,n = shape(X) 
+4  K = mat(zeros((m,1))) 
+5  # 数据不用核函数计算
+6  if kTup [0] == 'lin': K = X * A.T 
+7 //
+8  # 用径向基核函数计算 
+9    elif kTup[0] == 'rbf':
+10  for j in range(m):
+11   deltaRow = X[j,:] - A
+12   K[j] = deltaRow * deltaRow.T
+13   K = exp(K/(-1*kTup[1]**2))
+14  # kTup 元组值异常，抛出异常信息
+15  else:raise NameError('Houston We Have a Problem --That Kernel is not recognized')
+16  return K
+测试函数：
+1 # 训练样本集的错误率和测试样本集的错误率
+2 def testRbf(k1=1.3):
+3  dataArr,labelArr = loadDataSet('testSetRBF.txt') # 训练样本的提取 
+4  b,alphas = smoP(dataArr, labelArr, 200, 0, 730, ('rbf', k1)) # 计算得到截距和对偶因子 
+5  datMat=mat(dataArr); labelMat = mat(labelArr).transpose() 
+6  svInd=nonzero(alphas.A>0)[0] # 对偶因子大于零的值，支持向量的点对应对偶因子
+ 7  sVs=datMat[svInd]
+ 8  labelSV = labelMat[svInd]
+ 9   print "there are %d Support Vectors" % shape(sVs)[0]
+10  m,n = shape(datMat)
+11  errorCount = 0
+12   # 对训练样本集的测试
+13  for i in range(m):
+14  kernelEval = kernelTrans(sVs,datMat[i,:],('rbf', k1)) # 对象 i 的映射值
+15  predict=kernelEval.T * multiply(labelSV,alphas[svInd]) + b # 预测值
+16  if sign(predict)!=sign(labelArr[i]): errorCount += 1
+17 print "the training error rate is: %f" % (float(errorCount)/m)
+18 dataArr,labelArr = loadDataSet('testSetRBF2.txt') # 测试样本集的提取
+19  errorCount = 0
+20 datMat=mat(dataArr); labelMat = mat(labelArr).transpose()
+21 m,n = shape(datMat)
+22 # 对测试样本集的测试
+23 for i in range(m):
+24 kernelEval = kernelTrans(sVs,datMat[i,:],('rbf', k1)) # 测试样本对象 i 的映射值
+25 predict=kernelEval.T * multiply(labelSV,alphas[svInd]) + b # 预测值
+26 if sign(predict)!=sign(labelArr[i]): errorCount += 1
+27  print "the test error rate is: %f" % (float(errorCount)/m)
+
+
+
+三、LSTM代码实现：
+模型数据导入：
+def load_imdb_data(path='imdb.npz',choosedata='train',num_words=None):
+    """
+    imdb.npz数据提取
+    :param path: imdb数据地址
+    :param choosedata: {'all','train','test','trainandtest'}
+    :param num_words:数据值上限
+    :return:x,y:数据标签
+    """
+    with np.load(path) as f:#提取数据
+        x_train, y_train = f['x_train'], f['y_train']
+        x_test, y_test = f['x_test'], f['y_test']
+    #测试数据提取
+    indices = np.arange(len(x_train))#数据长度
+    np.random.shuffle(indices)#随机打乱顺序
+    x_train = x_train[indices]#提取打乱顺序的训练数据
+    y_train = y_train[indices]#提取打乱顺序的训练数据的标签
+    #训练数据提取
+    indices = np.arange(len(x_test))
+    np.random.shuffle(indices)
+    x_test = x_test[indices]
+    y_test = y_test[indices]
+    #去除数据中超过上限的值，下限为0
+    if num_words is not None:
+        x_train = [[w for w in x if 0 <= w < num_words] for x in x_train]
+        x_test = [[w for w in x if 0 <= w < num_words] for x in x_test]
+    if choosedata=='train':
+        return x_train,y_train
+    elif choosedata=='test':
+        return x_test,y_test
+    elif choosedata=='trainandtest':
+        return (x_train,y_train),(x_test,y_test)
+    elif choosedata=='all':
+        #数据拼接
+        xs = np.concatenate([x_train, x_test])
+        ys = np.concatenate([y_train, y_test])
+        return xs,ys
+ 
+def limit_imdb_datalength(datax,maxlen=730,truncating='post',dtype='int32'):
+    """
+    限定数据集的长度，对过长的进行剪切，不足的用0填充
+    :param datax:输入数据二维数组
+    :param maxlen:限定数据集的长度
+    :param truncating:前向限定还是后向限定{'pre','post'}
+    :param dtype:数据类型
+    :return:x:处理后的数据
+    """
+    #构建一个相同的矩阵来装改变后的数据
+    num_samples=len(datax)
+    x = np.full((num_samples, maxlen), 0., dtype=dtype)
+    #对数据进行长度判断，并将处理后的数据装在新数组x中
+    for idx, s in enumerate(datax):
+        if not len(s):
+            continue
+        if len(s)>maxlen:
+            if truncating == 'post':
+                trunc = s[:maxlen]
+                x[idx, :len(trunc)] = trunc
+            elif truncating == 'pre':
+                trunc = s[-maxlen:]
+                x[idx, -len(trunc):] = trunc
+        else:
+            trunc=s
+            if truncating == 'post':
+                x[idx, :len(trunc)] = trunc
+            elif truncating == 'pre':
+                x[idx, -len(trunc):] = trunc
+    return x
+
+预测模型建立：
+def perceptron_model():
+    #多层感知器模型，hidden_layer_num隐藏层层数
+    """这里导入的数据不需要进行reshpe改变，直接用datax.append(x)，datay.append(y)的数据就行"""
+    model=Sequential()
+    model.add(Dense(units=hidden_layer_num,input_dim=look_back,activation='relu'))
+    model.add(Dense(units=hidden_layer_num, activation='relu'))
+    model.add(Dense(units=1))
+    model.compile(loss='mean_squared_error',optimizer='adam')
+    return model
+ 
+def time_model():
+    #LSTM搭建的LSTM回归模型
+    model=Sequential()
+    model.add(LSTM(units=hidden_layer_num,input_shape=(1,look_back)))#四个隐藏层或者更多
+    model.add(Dense(units=1))
+    model.compile(loss='mean_squared_error',optimizer='adam')
+    return model
+ 
+def time_step_model():
+    #使用时间步长的LSTM回归模型
+    model=Sequential()
+    model.add(LSTM(units=hidden_layer_num,input_shape=(look_back,1)))
+    model.add(Dense(units=1))
+    model.compile(loss='mean_squared_error',optimizer='adam')
+    return model
+ 
+def memory_batches_model():
+    #LSTM的批次时间记忆模型
+    model=Sequential()
+    # 通过设置stateful为True来保证LSTM层内部的状态，从而获得更好的控制
+    model.add(LSTM(units=hidden_layer_num,batch_input_shape=(batch_size,look_back,1),stateful=True))
+    model.add(Dense(units=1))
+    model.compile(loss='mean_squared_error',optimizer='adam')
+    return model
+
+训练测试模型：
+ # load and plot datasetfrom pandas import read_csvfrom pandas import datetimefrom matplotlib import pyplot
+# load dataset
+ def parser(x):
+    mean_loss = np.mean(history.history['loss'])
+    print('mean loss %.5f for loop %s' % (mean_loss, str(i)))
+    model.reset_states()#重置模型中所有层的状态
+    (x_train,y_train),(x_test,y_test) = load_imdb_data(choosedata='trainandtest',num_words=max_words)
+    x_train = limit_imdb_datalength(x_train,truncating='pre')
+    x_test = limit_imdb_datalength(x_test,truncating='pre')
+    model=easy_imdb_model()
+    model.fit(x_train,y_train,batch_size=batch_size,epochs=epochs,verbose=2)
+    scores=model.evaluate(x_test,y_test,verbose=2)
+    print("Accuracy:%.2f%%"%(scores[1]*100)
+
+
+四、XGBOOST代码实现
+
+ # load and plot datasetfrom pandas import read_csvfrom pandas import datetimefrom matplotlib import pyplot
+# load dataset
+ def parser(x):
+## part1: 模型训练
+import pandas as pd
+import numpy as np
+import os
+from datetime import datetime
+import xgboost as xgb
+
+traindata=pd.read_csv("/home/op1/yy/traindata.csv")
+traindata["add_date"]= pd.to_datetime(traindata["orderdate"]) #转化为日期格式
+
+#时间过滤
+traindata_a=traindata[(traindata["add_date"]<'2017-11-25')] #训练集
+testdata_a=traindata[(traindata["add_date"]>='2017-12-3') (traindata["add_date"]<='2017-11-25') & (traindata["rank1"]<=730)] #预测集
+                     
+#用户信息列表
+colnames=[ 
+#'masterhotel'
+'order_cii_notcancelcii'        
+,'city'             
+,'order_cii_ahead_1day'
+,'order_cii_ahead_3days_avg'
+,'order_cii_ahead_7days_avg'
+,'order_cii_30days_avg'
+,'order_cii_ahead_sameoneweek'
+,'order_cii_ahead_sametwoweeks_avg'
+,'star'                
+,'goldstar'            
+,'level'      
+,'ratingservice'       
+,'novoters'            
+,'week_day'       
+,'working_day'
+,'cii_ahead_sameoneweek'
+,'cii_ahead_sametwoweeks_avg'
+,'cii_ahead_samethreeweeks_avg'
+,'cii_ahead_samefourweeks_avg'
+,'simple_estimate_constant'
+,'cii_ahead_1day_avg'
+,'cii_ahead_3days_avg'
+,'cii_ahead_7days_avg'
+,'order_ahead_lt_1days'
+,'order_ahead_lt_2days'
+,'order_ahead_lt_3days'
+,'order_ahead_lt_7days'
+,'order_ahead_lt_14days'
+,'order_alldays'     
+,'click_ahead_1day'    
+,'click_ahead_2days'   
+,'click_ahead_3days'   
+,'click_ahead_7days'   
+,'click_ahead_14days'  
+,'browse_0day_uv'      
+,'browse_1day_uv'      
+,'browse_2day_uv'      
+,'browse_3day_uv'      
+,'browse_4day_uv'      
+,'browse_5day_uv'      
+,'browse_6day_uv'      
+,'browse_7_14day_uv'   
+,'browse_14daymore_uv' 
+,'order_cii_14days_avg'               
+,'order_cii_21days_avg' 
+,'order_cii_ahead_samethreeweeks_avg' 
+,'order_cii_ahead_samefourweeks_avg']
+
+#dtrain = xgb.DMatrix( data, label=label)
+#dtrain = xgb.DMatrix(data, label=label)
+#训练集构建
+
+label=traindata_a[colnames[0]]
+dtrain = xgb.DMatrix(traindata_a[colnames[1:]], label=traindata_a[colnames[0]])
+
+num_round=730
+params = {} 
+params["objective"] = "reg:linear" 
+params["eta"] = 0.2
+params["max_depth"] =5
+params["eval_metric"] = "rmse"
+params["silent"] = 0
+plst = list(params.items()) #Using 5000 rows for early stopping. 
+bst = xgb.train( plst, dtrain, num_round)
+
+#预测集构建
+dtest=xgb.DMatrix(testdata_a[colnames[1:]])
+
+#结果预测
+y_bar=bst.predict(dtest)
+
+#y.shape
+##  最终行为对比
+#testdata_a[colnames[0,]]
+#testdata_a.columns
+actual_values=testdata_a[["masterhotel","add_date","order_cii_notcancelcii","rank1"]]
+actual_values["y_bar"]=y_bar
+actual_values["mae"]=abs(actual_values["y_bar"]-actual_values["order_cii_notcancelcii"])
+
+top100=actual_values[actual_values["rank1"]<=100]
+mae100=top100.groupby("add_date").mean()
+mae500=actual_values.groupby("add_date").mean()
+
+## part2: 存储模型，方便后续直接调用
+bst.save_model('xgb.model') # 用于存储训练出的模型
+
+#模型初始化
+bst=xgb.Booster() #
+bst.load_model('/home/op1/yuanmin/xgb.model')
+y_bar=bst.predict(dtest)
+
+
+## 参数重要性
+
+pd.Series(bst.get_fscore()).sort_values(ascending=False)
+
+pd.Series(bst.get_fscore()).sort_values(ascending=False)/sum(pd.Series(bst.get_fscore()).sort_values(ascending=False)) #重要性归一化
+
